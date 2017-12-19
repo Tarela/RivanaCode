@@ -246,9 +246,11 @@ def pred_obs_bias(output,bg0):
     for seqtype in sorted(pBG.keys()):
         if pBG[seqtype] > 0:  
             obs = numpy.log(pBG[seqtype])
-            pred = mypredict(seqtype,b0s0,b1s0,b2s0,8)
-            newll = [seqtype,obs,pred]
-            outf.write("\t".join(map(str,newll))+"\n")
+        else:
+            obs = -1
+        pred = mypredict(seqtype,b0s0,b1s0,b2s0,8)
+        newll = [seqtype,obs,pred]
+        outf.write("\t".join(map(str,newll))+"\n")
     outf.close()
  
 # ------------------------------------

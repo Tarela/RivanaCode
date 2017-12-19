@@ -58,12 +58,12 @@ def make_nmer_dict(n):
     del allseq
     return nmer_seq
     
-def seqbias(peak,tag,out,sequence,flank):
+def seqbias(region,out,sequence,flank):
     genome = twobitreader.TwoBitFile(sequence) 
-    pcut = make_nmer_dict(2*flank)
+    #pcut = make_nmer_dict(2*flank)
     #ncut = make_nmer_dict(2*flank)
     bgseq = make_nmer_dict(2*flank)
-    inf = open(peak)
+    inf = open(region)
     for line in inf:
         ll = line.strip().split("\t")
         seq = genome[ll[0]][int(ll[1]):int(ll[2])]
@@ -74,36 +74,37 @@ def seqbias(peak,tag,out,sequence,flank):
             else:
                 pass
     inf.close()
-    inf = open(tag)
-    PEtag = 0
-    for line in inf:
-        ll = line.strip().split("\t")
-        if len(ll) < 6:
-            PEtag = 1
-        if PEtag == 1 or ll[5] == '+' or ll[5] == "." :
-            seq = genome[ll[0]][(int(ll[1])-flank):(int(ll[1])+flank)].upper()
-            if pcut.has_key(seq):
-                pcut[seq]+=1
-            else:
-                #print seq
-                pass
-        if PEtag == 1 or ll[5] == '-' or ll[5] == ".":
-            seq = rev(genome[ll[0]][(int(ll[2])-flank):(int(ll[2])+flank)].upper())
-            if pcut.has_key(seq):
-                pcut[seq]+=1
-            else:
-                #print seq
-                pass
-        
-    inf.close()
+    #inf = open(tag)
+    #PEtag = 0
+    #for line in inf:
+    #    ll = line.strip().split("\t")
+    #    if len(ll) < 6:
+    #        PEtag = 1
+    #    if PEtag == 1 or ll[5] == '+' or ll[5] == "." :
+    #        seq = genome[ll[0]][(int(ll[1])-flank):(int(ll[1])+flank)].upper()
+    #        if pcut.has_key(seq):
+    #            pcut[seq]+=1
+    #        else:
+    #            #print seq
+    #            pass
+    #    if PEtag == 1 or ll[5] == '-' or ll[5] == ".":
+    #        seq = rev(genome[ll[0]][(int(ll[2])-flank):(int(ll[2])+flank)].upper())
+    #        if pcut.has_key(seq):
+    #            pcut[seq]+=1
+    #        else:
+    #            #print seq
+    #            pass
+    #    
+    #inf.close()
     outf = open(out,'w')
-    for seqtype in sorted(pcut.keys()):
-        if bgseq[seqtype] == 0:
-            pbias = -1
-        else:  
-            pbias = float(pcut[seqtype])/float(bgseq[seqtype])
+    for seqtype in sorted(bgseq.keys()):
+        #if bgseq[seqtype] == 0:
+        #    pbias = -1
+        #else:  
+        #    pbias = float(pcut[seqtype])/float(bgseq[seqtype])
         #nbias = float(ncut[seqtype])/float(bgseq[seqtype])
-        outf.write("\t".join(map(str,[seqtype,pbias,pcut[seqtype],bgseq[seqtype]]))+"\n")
+        outf.write("\t".join(map(str,[seqtype,bgseq[seqtype]]))+"\n")
+        #outf.write("\t".join(map(str,[seqtype,pbias,pcut[seqtype],bgseq[seqtype]]))+"\n")
     outf.close()
 
 
@@ -119,10 +120,10 @@ def main():
     optparser.add_option("-h","--help",action="help",help="Show this help message and exit.")
 
 #========major options=============
-    optparser.add_option("-p","--peak",dest="peak",type="str",
-                         help="peak region for calculate background (k-mer occurancy)")
-    optparser.add_option("-t","--tag",dest="tag",type="str",
-                         help="6-column reads file (bed) for calculate foreground (cuts occyrancy)")              
+    optparser.add_option("-i","--inputregion",dest="inputregion",type="str",
+                         help="input region for calculate background (k-mer occurancy)")
+    #optparser.add_option("-t","--tag",dest="tag",type="str",
+    #                     help="6-column reads file (bed) for calculate foreground (cuts occyrancy)")              
     optparser.add_option("-o","--out",dest="out",type="str",
                          help="")              
     optparser.add_option("-s","--sequence",dest="sequence",type="str",default='/Data/Genome/hg19.2bit',
@@ -134,16 +135,16 @@ def main():
 
     (options,args) = optparser.parse_args()
 
-    peak = options.peak
-    tag = options.tag
+    #peak = options.peak
+    region = options.inputregion
     out = options.out
     seq = options.sequence
     flank = options.flank
-    if not peak:
+    if not region:
         optparser.print_help()
         sys.exit(1)
     
-    seqbias(peak,tag,out,seq,flank)
+    seqbias(region,out,seq,flank)
 
 if __name__== '__main__':
     try:
