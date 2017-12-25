@@ -144,8 +144,8 @@ def build_nmer_model(fp, w_plus,w_minus,out,single_nmer_cut,sequence,lflank,rfla
     #print len(allcut_nmer_dict),len(cut_nmer_dict_p),len(cut_nmer_dict_n)
     # normalize
     outf = open(out,'w')
-    for elem in dall:
-        if not seq_nmer_dict.has_key(elem):
+    for elem in sorted(dall.keys()):
+        if not cut_nmer_dict.has_key(elem):
             #pbias = -1
             pcut = 0
             #pseq = -1

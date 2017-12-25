@@ -1,9 +1,0 @@
-python /home/sh430/Project/DNase/Script/generate_reads_genome.py -i /home/sh430/Data/Genome/sacCer3.fa -o sacCer3_chr_fareads.fa -l 30
-
-bowtie -S  -f -p 8 -m 1 /home/sh430/Data/bowtie_Index/sacCer3/sacCer3 sacCer3_chr_fareads.fa sacCer3_chr_fareads.sam   2>&1 >>/dev/null |tee -a sacCer3_chr_fareads_mappbility.out
-samtools view -bht ~/Data/Genome/ChromLen/ChromInfo_sacCer3.txt sacCer3_chr_fareads.sam -o sacCer3_chr_fareads.bam
-bamToBed -i sacCer3_chr_fareads.bam > sacCer3_chr_fareads.bed
-/home/sh430/bin/bin/macs2 pileup -i sacCer3_chr_fareads.bed -f BED --extsize 30 -o sacCer3_chr_fareads.bdg
-bdg2bw  sacCer3_chr_fareads.bdg ~/Data/Genome/ChromLen/ChromInfo_sacCer3.txt
-
-awk '{if ($4==30 && $3-$2 > 100) print $0;}' sacCer3_chr_fareads.bdg > sacCer3_chr_fareads30bp_ge100mapregion.bed

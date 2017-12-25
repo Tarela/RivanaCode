@@ -37,6 +37,7 @@ def generate_reads_fa(genomefa,output,seqlen):
             chromSeq = ""
         else:
             chromSeq += line.strip()
+    genome[chrm] = chromSeq
     inf.close()
     count = 0
     for chrom in genome:
