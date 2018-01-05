@@ -32,7 +32,7 @@ def sp(cmd):
     ac = a.communicate()
     return ac
 def sample(inputfile,outputfile,percentage,number):
-    random.seed(1228)
+#    random.seed(1228)
     if percentage == -1 :
         total = int(sp('wc -l %s'%(inputfile))[0].split()[0])
         percentage = number*1000.0/total

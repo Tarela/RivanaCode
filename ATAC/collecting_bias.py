@@ -18,7 +18,8 @@ def make_nmer_dict(n):
     del allseq
     return nmer_seq
 
-def addbias(rawdict,encodingdict, infile):
+def addbias(encodingdict, infile):
+#    os.system('wc -l %s'%infile)
     inf = open(infile)
     tmpdict = {}
     for line in inf:
@@ -28,77 +29,168 @@ def addbias(rawdict,encodingdict, infile):
         encoding = ll[2]
         tmpdict[seq] = ll[1:]
     inf.close()
-    for seqtype in rawdict.keys():
+    for seqtype in encodingdict.keys():
         if tmpdict.has_key(seqtype):
-            rawdict[seqtype].append( str(round(float(tmpdict[seqtype][0]),4)) )
+            #rawdict[seqtype].append( str(round(float(tmpdict[seqtype][0]),4)) )
             encodingdict[seqtype].append(str(round(float(tmpdict[seqtype][1]),4)) )
         else:
-            rawdict[seqtype].append(str(-8))
+            #rawdict[seqtype].append(str(-8))
             encodingdict[seqtype].append(str(-8))
     return
     
             
 
-### 8mer bias
+### peak bias
 Encodingbias = make_nmer_dict(8)
-rawbias = make_nmer_dict(8)
-
 total_sample_list = []
 
-# mouse tissue DNase
-folder = '/nv/vol190/zanglab/sh8tv/Project/scATAC/Data/ENCODE_DNase/mouse_tissue/'
-suffix = '_8mer_raw_Encoding_bias.txt'
-samplelist = ["brainE145","brainE185","cerebellum8w","embryoE115","fatPad8w","gonadalFatPad8w","heart8w","kidney8w","largeIntestine8w","liver8w","lung8w","skeletalMuscle8w","spleen8w","telencephalon8w","thymus8w"]
-for sample in samplelist:
-    total_sample_list.append("mmDNase_"+sample)
-    this_file = folder + sample + suffix
-    addbias(rawbias, Encodingbias, this_file)
+inf = open('biasMat_ownpeak.txt')
+outf = open('peak_enc8mer.txt','w')
+for line in inf:
+    if line.startswith('file'):
+        continue
+    ll = line.split()
+    colname = ll[1]#"_".join(ll[1].split("_")[1:])
+    filename = ll[0]
+    if os.path.isfile(filename):
+        addbias(Encodingbias, filename )
+        total_sample_list.append(colname)
+    else:
+        print 'no file: '+filename
+inf.close()
 
-# human cell line DNase
-folder = '/nv/vol190/zanglab/sh8tv/Project/scATAC/Data/ENCODE_DNase/human_cellline/'
-suffix = '_DNase_8mer_raw_Encoding_bias.txt'
-samplelist = ["H1","K562","GM12878"]
-for sample in samplelist:
-    total_sample_list.append("hsDNase_"+sample)
-    this_file = folder + sample + suffix
-    addbias(rawbias, Encodingbias, this_file)
+outf.write("\t".join(['seqtype']+total_sample_list)+"\n")
+for SeqT in sorted(Encodingbias.keys()):
+    newll = [SeqT] + Encodingbias[SeqT]
+    outf.write("\t".join(newll)+"\n")
+outf.close()
 
+### outpeak bias
+Encodingbias = make_nmer_dict(8)
+total_sample_list = []
 
+inf = open('biasMat_outpeak.txt')
+outf = open('outpeak_enc8mer.txt','w')
+for line in inf:
+    if line.startswith('file'):
+        continue
+    ll = line.split()
+    colname = ll[1]#"_".join(ll[1].split("_")[1:])
+    filename = ll[0]
+    if os.path.isfile(filename):
+        addbias(Encodingbias, filename )
+        total_sample_list.append(colname)
+    else:
+        print 'no file: '+filename
+inf.close()
 
-### output
-outf1 = open('summary_rawbias_8mer.txt','w')
-outf2 = open('summary_encodingbias_8mer.txt','w')
+outf.write("\t".join(['seqtype']+total_sample_list)+"\n")
+for SeqT in sorted(Encodingbias.keys()):
+    newll = [SeqT] + Encodingbias[SeqT]
+    outf.write("\t".join(newll)+"\n")
+outf.close()
 
-newll = ['seqtype'] + total_sample_list
-outf1.write("\t".join(newll)+"\n")
-outf2.write("\t".join(newll)+"\n")
+### chrM bias
+Encodingbias = make_nmer_dict(8)
+total_sample_list = []
 
-for SeqT in sorted(rawbias.keys()):
-    newll1 = [SeqT] + rawbias[SeqT]
-    newll2 = [SeqT] + Encodingbias[SeqT]
-    outf1.write("\t".join(newll1)+"\n")
-    outf2.write("\t".join(newll2)+"\n")
+inf = open('biasMat_chrM.txt')
+outf = open('chrM_enc8mer.txt','w')
+for line in inf:
+    if line.startswith('file'):
+        continue
+    ll = line.split()
+    colname = ll[1]#"_".join(ll[1].split("_")[1:])
+    filename = ll[0]
+    if os.path.isfile(filename):
+        addbias(Encodingbias, filename )
+        total_sample_list.append(colname)
+    else:
+        print 'no file: '+filename
+inf.close()
 
-outf1.close()
-outf2.close()
+outf.write("\t".join(['seqtype']+total_sample_list)+"\n")
+for SeqT in sorted(Encodingbias.keys()):
+    newll = [SeqT] + Encodingbias[SeqT]
+    outf.write("\t".join(newll)+"\n")
+outf.close()
 
+### promoter bias
+Encodingbias = make_nmer_dict(8)
+total_sample_list = []
 
+inf = open('biasMat_promoter3kb.txt')
+outf = open('promoter3kb_enc8mer.txt','w')
+for line in inf:
+    if line.startswith('file'):
+        continue
+    ll = line.split()
+    colname = ll[1]#"_".join(ll[1].split("_")[1:])
+    filename = ll[0]
+    if os.path.isfile(filename):
+        addbias(Encodingbias, filename )
+        total_sample_list.append(colname)
+    else:
+        print 'no file: '+filename
+inf.close()
 
+outf.write("\t".join(['seqtype']+total_sample_list)+"\n")
+for SeqT in sorted(Encodingbias.keys()):
+    newll = [SeqT] + Encodingbias[SeqT]
+    outf.write("\t".join(newll)+"\n")
+outf.close()
 
+### naked bias
+Encodingbias = make_nmer_dict(8)
+total_sample_list = []
 
+inf = open('biasMat_naked.txt')
+outf = open('naked_enc8mer.txt','w')
+for line in inf:
+    if line.startswith('file'):
+        continue
+    ll = line.split()
+    colname = ll[1]#"_".join(ll[1].split("_")[1:])
+    filename = ll[0]
+    if os.path.isfile(filename):
+        addbias(Encodingbias, filename )
+        total_sample_list.append(colname)
+    else:
+        print 'no file: '+filename
+inf.close()
 
+outf.write("\t".join(['seqtype']+total_sample_list)+"\n")
+for SeqT in sorted(Encodingbias.keys()):
+    newll = [SeqT] + Encodingbias[SeqT]
+    outf.write("\t".join(newll)+"\n")
+outf.close()
 
+### genome bias
 
+Encodingbias = make_nmer_dict(8)
+total_sample_list = []
+folder = '/nv/vol190/zanglab/sh8tv/Project/scATAC/Data/bias_matrix/cutCount/genome/'
 
+inf = open('biasMat_chrM.txt')
+outf = open('genome_enc8mer.txt','w')
+for line in inf:
+    if line.startswith('file'):
+        continue
+    ll = line.split()
+    colname = 'genome_'+"_".join(ll[1].split("_")[1:])
+    filename = folder+colname+'_Enc8mer.txt'
+    if os.path.isfile(filename):
+        addbias(Encodingbias, filename )
+        total_sample_list.append(colname)
+    else:
+        print 'no file: '+filename
+inf.close()
 
-
-
-
-
-
-
-
-
+outf.write("\t".join(['seqtype']+total_sample_list)+"\n")
+for SeqT in sorted(Encodingbias.keys()):
+    newll = [SeqT] + Encodingbias[SeqT]
+    outf.write("\t".join(newll)+"\n")
+outf.close()
 
 
 
