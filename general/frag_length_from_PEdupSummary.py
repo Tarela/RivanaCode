@@ -23,39 +23,44 @@ from optparse import OptionParser
 # Misc functions
 # ------------------------------------
 
-def fraglen(inputfile,output,toplim,bottomlim):
+def fraglen(inputfile,output,LIM):
   #  output += 'out_'
+    uselim = int(float(LIM))
     inf = open(inputfile)
-    D = {}
+    DnoMall = []
+    DnoMuniq = []
+    DchrMall = []
+    DchrMuniq = []
     #print int(float(bottomlim)),int(float(toplim))
-    for i in range(int(float(bottomlim)),int(float(toplim))):
-        D[i]=0
+    for i in range(uselim):
+        DnoMall.append(0)
+        DnoMuniq.append(0)
+        DchrMall.append(0)
+        DchrMuniq.append(0)
     
     for line in inf:
-        if line.startswith('@'):
-            continue
         ll = line.strip().split("\t")
-        if ll[2].startswith('chr') and int(ll[8]) > 0 :
-            if D.has_key(int(ll[8])):
-                D[int(ll[8])]+=1    
+        fraglen = int(ll[8])
+        dupN = int(ll[4])
+        if fraglen > uselim or fraglen == 0:
+            continue
+        if ll[0] == "chrM":
+            DchrMuniq[(fraglen-1)] += 1
+            DchrMall[(fraglen-1)] += dupN
+        else:
+            DnoMuniq[(fraglen-1)] += 1
+            DnoMall[(fraglen-1)] += dupN
     inf.close()
-    length = []
-    times = []
-    for i in sorted(D.keys()):
-        length.append(i)
-        times.append(D[i])
-    outf = open(output+'.r','w')
-    outf.write('fraglen<-c('+str(length)[1:-1]+')\n')
-    outf.write('%s<-c('%(output)+str(times)[1:-1]+')\n')
-    plotscript = """
-pdf(file="%s.pdf")
-plot(fraglen,%s,type="l",lwd=2,col="blue",xlab="Pairend size",ylab="count",main="Paired end size distribution of %s")
-legend("topleft",c("%s"),col=c("blue"),lwd=5,bty="n")
-dev.off()
-"""%(output,output,output,output)
-    outf.write(plotscript)
-    outf.close()
-    os.system('Rscript %s.r'%(output))
+    outf = open(output+'_fraglen.txt','w')
+    newll1 = [output+"_noMall"] + DnoMall
+    newll2 = [output+"_noMuniq"] + DnoMuniq
+    newll3 = [output+"_chrMall"] + DchrMall
+    newll4 = [output+"_chrMuniq"] + DchrMuniq
+    outf.write("\t".join(map(str,newll1))+"\n")
+    outf.write("\t".join(map(str,newll2))+"\n")
+    outf.write("\t".join(map(str,newll3))+"\n")
+    outf.write("\t".join(map(str,newll4))+"\n")
+    
 
 
 # ------------------------------------
@@ -76,11 +81,9 @@ def main():
                          help="name of your output file, you will have 2 output file named as youname.r and yourname.pdf")
 
 #========minor options=============
-    optparser.add_option("--bottomlimit",dest="botlim",type="int",default =0,
-                         help="bottom limit of your paired end size range, default is 0")
 
-    optparser.add_option("--upperlimit",dest="uplim",type="int",default =600,
-                         help="upper limit of your paired end size range, default is 600")
+    optparser.add_option("--limit",dest="limit",type="int",default =2000,
+                         help="upper limit of your paired end size range, default is 2000")
 
     (options,args) = optparser.parse_args()
 
@@ -91,7 +94,7 @@ def main():
         optparser.print_help()
         sys.exit(1)
     
-    fraglen(inputfile,output,options.uplim,options.botlim)
+    fraglen(inputfile,output,options.limit)
 
 
 if __name__== '__main__':

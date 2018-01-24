@@ -48,7 +48,7 @@ def summary_DNAme_pattern(indata):
     else:
         realdata = numpy.array(map(float,filterdata))
         NCpG = (len(realdata))
-        NmeCpG = (len(realdata[realdata > 0.8]))
+        NmeCpG = (len(realdata[realdata >= 0.8]))
         NunmeCpG = (len(realdata[realdata <= 0.2]))
         aveDNAme = (numpy.mean(realdata))
     return [NCpG, NunmeCpG, NmeCpG, aveDNAme]
