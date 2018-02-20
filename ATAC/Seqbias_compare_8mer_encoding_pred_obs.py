@@ -51,16 +51,18 @@ def ols(X,y):
     return b
 
 def readBG(bgmatrix):
+    Mgenomepos = 0
+    Nreadscount = 0
     pBG = {}
-    nBG = {}
     inf = open(bgmatrix)
     for line in inf:
         ll = line.split()
         name = ll[0]
         pBG[name] = float(ll[1])
-        nBG[name] = float(ll[2])
+        Mgenomepos += int(ll[3])
+        Nreadscount += int(ll[2])        
     inf.close()
-    return pBG,nBG
+    return pBG, Nreadscount, Mgenomepos
 
 class encoding(object):
     def __init__(self):
@@ -214,7 +216,7 @@ def paramest(seqd):
     return b0,b1,b2
 
 
-def mypredict(seq,b0f,b1f,b2f,w):
+def mypredict(seq,b0f,b1f,b2f):
     code = encoding()
     predY = b0f
     useseq = seq
@@ -235,21 +237,24 @@ def mypredict(seq,b0f,b1f,b2f,w):
         predY+=predy
     return predY
 
-
 def pred_obs_bias(output,bg0):
- 
-    pBG,nBG = readBG(bg0)
+    pBG,N,M = readBG(bg0)
     code = encoding() 
     b0s0,b1s0,b2s0 = paramest(pBG)
     print b0s0,b1s0,b2s0
     outf = open(output,'w')
+    newll = ['seqtype','rawbias','encbias','rawalpha','encalpha']
+    outf.write("\t".join(newll)+"\n")
     for seqtype in sorted(pBG.keys()):
         if pBG[seqtype] > 0:  
-            obs = numpy.log(pBG[seqtype])
+            rawalpha = N*1.0/(M*pBG[seqtype])
+            rawbias = numpy.log(pBG[seqtype])
         else:
-            obs = -1
-        pred = mypredict(seqtype,b0s0,b1s0,b2s0,8)
-        newll = [seqtype,obs,pred]
+            rawalpha = "NA"
+            rawbias = "NA"
+        encbias = mypredict(seqtype,b0s0,b1s0,b2s0)
+        encalpha = N*1.0/(M*pow(numpy.e,encbias))
+        newll = [seqtype,rawbias,encbias,rawalpha,encalpha]
         outf.write("\t".join(map(str,newll))+"\n")
     outf.close()
  
