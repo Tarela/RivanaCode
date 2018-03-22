@@ -78,17 +78,23 @@ def seqbias(peak,tag,out,sequence,flank):
     PEtag = 0
     for line in inf:
         ll = line.strip().split("\t")
+        if "." in ll[0] or "_" in ll[0]:
+            continue
+        if ll[0] == "chrMT":
+            chrm = 'chrM'
+        else:
+            chrm = ll[0]
         if len(ll) < 6:
             PEtag = 1
         if PEtag == 1 or ll[5] == '+' or ll[5] == "." :
-            seq = genome[ll[0]][(int(ll[1])-flank):(int(ll[1])+flank)].upper()
+            seq = genome[chrm][(int(ll[1])-flank):(int(ll[1])+flank)].upper()
             if pcut.has_key(seq):
                 pcut[seq]+=1
             else:
                 #print seq
                 pass
         if PEtag == 1 or ll[5] == '-' or ll[5] == ".":
-            seq = rev(genome[ll[0]][(int(ll[2])-flank):(int(ll[2])+flank)].upper())
+            seq = rev(genome[chrm][(int(ll[2])-flank):(int(ll[2])+flank)].upper())
             if pcut.has_key(seq):
                 pcut[seq]+=1
             else:

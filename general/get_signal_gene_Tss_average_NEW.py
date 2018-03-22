@@ -101,7 +101,7 @@ def main():
 
     optparser.add_option("--ext",dest="ex",type="int",default = 3000,
                          help="")
-    optparser.add_option("--bwfolder",dest="bwfolder",type="str",
+    optparser.add_option("--bwfolder",dest="bwfolder",type="str",default=".",
                          help="")
 #    optparser.add_option("--strand",dest="bwfolder",type="str",default=0,
 #                         help="consider strand info(6th col) or not, 1 : consider strand, 0 : not consider, default=0")
