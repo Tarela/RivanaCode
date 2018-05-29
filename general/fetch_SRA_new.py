@@ -32,8 +32,8 @@ from ftplib import FTP
 def addSRA(infile,outname,nGSMcol):
 
     inf = open(infile)
-    outmeta = open(outname+"_meta.txt",'w')
-    outcmd = open(outname+'_cmd.sh','w')
+    outmeta = open(outname,'w')
+#    outcmd = open(outname+'_cmd.sh','w')
     
     ftp_connection = FTP('ftp-trace.ncbi.nlm.nih.gov')
     ftp_connection.login()
@@ -82,12 +82,12 @@ def addSRA(infile,outname,nGSMcol):
         if len(SRRIDs) == 0:
             continue
       #  print SRRIDs
-        for srrid in sorted(list(set(SRRIDs))):
-            outcmd.write(" ".join(["./downmap",srrid])+"\n")
+#        for srrid in sorted(list(set(SRRIDs))):
+#            outcmd.write(" ".join(["./downmap",srrid])+"\n")
         newll = ll + [SRXID,",".join(SRRIDs)]
         outmeta.write("\t".join(newll)+"\n")
     outmeta.close()
-    outcmd.close()
+#    outcmd.close()
         	
 
 
@@ -105,8 +105,8 @@ def main():
 #========major options=============
     optparser.add_option("-i","--input",dest="inputfile",type="str",
                          help="")
-    optparser.add_option("-o","--outname",dest="outname",type="str",default="GSM2SRR",
-                         help="name of output files, you get two output files: outname_meta.txt, outname_cmd.sh, default is GSM2SRR")
+    optparser.add_option("-o","--outputfile",dest="outputfile",type="str",default="GSM2SRRmeta.txt",
+                         help="name of the output file, default is GSM2SRRmeta.txt")
     optparser.add_option("-n","--nGSMcol",dest="nGSMcol",type="int",default=1,
                          help="column number of GSMID, default is 1 (first column)")
 
@@ -115,7 +115,7 @@ def main():
     (options,args) = optparser.parse_args()
 
     inputfile = options.inputfile
-    outname = options.outname
+    outname = options.outputfile
     nGSMcol = options.nGSMcol
     if not inputfile:
         optparser.print_help()

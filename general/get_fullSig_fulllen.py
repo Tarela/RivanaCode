@@ -38,15 +38,20 @@ from bx.bbi.bigwig_file import BigWigFile
 #    sigPat = sp(cmd)[0].strip().split("\t")
 #    return sigPat
 
-def get_signal(inputfile,output,plusBW,minusBW,bwfolder,extend):
+def get_signal(inputfile,output,bwfiles,bwfolder):
+    signalbw = bwfiles.strip().strip(',').split(',')
 
     if not bwfolder:
-        bwfolder = "./"
-    if not bwfolder.endswith('/') :
+        bwfolder = ""
+    if not bwfolder.endswith('/'):
         bwfolder += '/'
 
-    plus = BigWigFile(open(bwfolder + plusBW, 'rb'))
-    minus = BigWigFile(open(bwfolder + minusBW, 'rb'))
+    bwHs = []
+    for sb in signalbw:
+        if sb.startswith('/'):
+            bwHs.append(BigWigFile(open(sb, 'rb')))
+        else:
+            bwHs.append(BigWigFile(open(bwfolder + sb, 'rb')))
 
     inf = open(inputfile)
     outf = open(output,'w')
@@ -54,34 +59,27 @@ def get_signal(inputfile,output,plusBW,minusBW,bwfolder,extend):
         ll = line.split()
         if "_" in ll[0]:
             continue
-        if len(ll)>=6 and ll[5] == "-":
-            strand_flap = 1
-        else:
-            strand_flap = 0
-        start = int(ll[1])
-        end = int(ll[2])
-        S = max(0,start - extend)
-        E = end + extend
-#        S = int(ll[1])
-#        E = int(ll[2])
-        outdata = ll
-        try:
-            plus_signal=(plus.summarize(ll[0],S,E,(E-S)))
-            minus_signal=(minus.summarize(ll[0],S,E,(E-S)))
-            if plus_signal and minus_signal:
-                plus_tmp = list(plus_signal.sum_data)
-                minus_tmp = list(minus_signal.sum_data)
-
-                if strand_flap == 1:
-                    thisdata_tmp = minus_tmp[::-1] + plus_tmp[::-1]#map(round,thisdata_tmp,[4]*(E-S))[::-1]
+        #center = (int(ll[1]) + int(ll[2]))/2
+        #S = max(0,center - extend)
+        #E = center + extend
+        S = int(ll[1])
+        E = int(ll[2])
+        for bwHandle in bwHs:
+            try:
+                signal=(bwHandle.summarize(ll[0],S,E,E-S))
+                if type(signal.sum_data) == None:
+                    #print 'c1',line
+                    addsig = 0
+#                if float(signal.sum_data) == 0:
+#                    addsig = 0      #  ll.extend(list(signal.sum_data))
                 else:
-                    thisdata_tmp = plus_tmp + minus_tmp
-                thisdata = thisdata_tmp#map(round,thisdata_tmp,[4]*len(thisdata_tmp))
-        except:
-            pass              
-        outdata.extend(thisdata)
-            # ll.extend(list(signal.sum_data/signal.valid_count))
-        outf.write("\t".join(map(str,outdata))+"\n")
+                    addsig = sum(signal.sum_data)
+            except:
+                #print 'c2',line
+                addsig = 0#'nan'
+               # ll.extend(list(signal.sum_data/signal.valid_count))
+            ll.append(addsig)
+        outf.write("\t".join(map(str,ll))+"\n")
     inf.close()
     outf.close()
 
@@ -102,25 +100,22 @@ def main():
                          help="input bed file")
     optparser.add_option("-o","--output",dest="output",type="str",default = "",
                          help="output bedEX file")
-    optparser.add_option("-p","--plusbw",dest="plusbw",type="str",default = "",
-                         help="plus bigwig cuts")
-    optparser.add_option("-n","--minusbw",dest="minusbw",type="str",default = "",
-                         help="minus bigwig cuts")
+    optparser.add_option("-w","--bws",dest="bws",type="str",default = "",
+                         help="bigwig files, comma separate")
     optparser.add_option("--bwfolder",dest="bwfolder",type="str",default = "",
                          help="folder of bigwig files")
-    optparser.add_option("--ext",dest="extend",type="int",default = 40,
-                         help="extend size from center")
 #========minor options=============
 
     (options,args) = optparser.parse_args()
 
     inputfile = options.inputfile
     output = options.output
+    bws = options.bws
     if not inputfile:
         optparser.print_help()
         sys.exit(1)
-
-    get_signal(inputfile,output,options.plusbw,options.minusbw,options.bwfolder,options.extend)
+    
+    get_signal(inputfile,output,bws,options.bwfolder)
 
 
 if __name__== '__main__':
@@ -130,4 +125,5 @@ if __name__== '__main__':
     except KeyboardInterrupt:
         sys.stderr.write("User interrupt me ^_^ \n")
         sys.exit(0)
+
 

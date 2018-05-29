@@ -9,8 +9,8 @@ for f in allf:
 #SBATCH -t 30:00:00
 #SBATCH -p standard
 #SBATCH -A zanglab
-#SBATCH -o %s.out
-#SBATCH -e %s.err
+#SBATCH -o %s.log
+#SBATCH -e %s.log
 #Run program
 
 /nv/vol190/zanglab/sh8tv/Project/scATAC/Data/nakedDNA/Yeast_naked_SRA054922/./downmapPE %s sacCer3

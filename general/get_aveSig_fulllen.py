@@ -42,7 +42,7 @@ def get_signal(inputfile,output,bwfiles,bwfolder):
     signalbw = bwfiles.strip().strip(',').split(',')
 
     if not bwfolder:
-        bwfolder = ""
+        bwfolder = "./"
     if not bwfolder.endswith('/'):
         bwfolder += '/'
 
@@ -66,14 +66,12 @@ def get_signal(inputfile,output,bwfiles,bwfolder):
         E = int(ll[2])
         for bwHandle in bwHs:
             try:
-                signal=(bwHandle.summarize(ll[0],S,E,1))
+                signal=(bwHandle.summarize(ll[0],S,E,E-S))
                 if type(signal.sum_data) == None:
                     #print 'c1',line
                     addsig = 0
-                if float(signal.sum_data) == 0:
-                    addsig = 0      #  ll.extend(list(signal.sum_data))
                 else:
-                    addsig = float(signal.sum_data/signal.valid_count)
+                    addsig = sum(signal.sum_data)*1.0/(E-S)#float(signal.sum_data/signal.valid_count)
             except:
                 #print 'c2',line
                 addsig = 0#'nan'

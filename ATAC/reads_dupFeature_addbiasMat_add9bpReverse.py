@@ -114,6 +114,8 @@ def dupFeature(inputbed, outputfilename, seq2bit, GCrange, flankLen, biasfile):
     bias = {}
     inf = open(biasfile)
     for line in inf:
+        if line.startswith("seqtype"):
+            continue
         ll = line.split()
         bias[ll[0]] = str(round(float(ll[2]),4))
     inf.close()

@@ -1,14 +1,15 @@
-inf = open('meta_cmd.sh')
+import os
+inf = open('cmd.sh')
 for line in inf:
     SRR = line.split()[1]
     model="""#!/bin/bash
-#SBATCH -n 8
-#SBATCH --mem=100000
-#SBATCH -t 18:00:00
+#SBATCH -n 1
+#SBATCH --mem=10000
+#SBATCH -t 10:00:00
 #SBATCH -p standard
 #SBATCH -A zanglab
-#SBATCH -o %s.out
-#SBATCH -e %s.err
+#SBATCH -o %s.log
+#SBATCH -e %s.log
 #Run program
 
 ./downmap %s %s
@@ -16,4 +17,5 @@ for line in inf:
     outf=  open('%s.slurm'%(SRR),'w')
     outf.write(model)
     outf.close()
+    os.system("sbatch %s.slurm"%(SRR))
 
