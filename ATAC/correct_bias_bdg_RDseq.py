@@ -36,7 +36,7 @@ import numpy
 
 def rev(seq):
     revseq = ""
-    for i in seq[::-1].upper():
+    for i in seq[::-1]:
         if i == 'A':
             r = 'T'
         elif i == 'T':
@@ -109,7 +109,7 @@ def bias_correct_flank(inbdg,outname,biasMat,Gen,strand):
                 if strand == "+":
                     this_seq = genome[chrm][(pos-flank):(pos+flank)].upper()
                 else:
-                    this_seq = rev(genome[chrm][(pos-flank+1):(pos+flank+1)].upper())
+                    this_seq = rev(genome[chrm][(pos-flank+1):(pos+flank+1)]).upper()
                 if BGraw.has_key(this_seq):
                     if BGraw[this_seq] == "NA":
                         raw_correct_sig = raw_sig
