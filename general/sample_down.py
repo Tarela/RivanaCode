@@ -40,7 +40,7 @@ def sample(inputfile,outputfile,percentage,number):
     outf = open(outputfile,'w')
     for line in inf:
         a = random.randint(0,1000)
-        if a<= percentage:
+        if a<= percentage*1000:
             outf.write(line)
     inf.close()
     outf.close()
@@ -66,8 +66,8 @@ def main():
                          help="")
     optparser.add_option("-o","--output",dest="output",type="str",default = "",
                          help="")
-    optparser.add_option("-p","--percentage",dest="percentage",type="int",default = -1,
-                         help="% of reads, 10 = 10%, can't be set with -n")
+    optparser.add_option("-p","--percentage",dest="percentage",type="float",default = -1,
+                         help="% of reads, input 0.1 for 10%, can't be set with -n")
     optparser.add_option("-n","--number",dest="number",type="int",default = -1,
                          help="number of reads , can't be set with -p ")
 #========minor options=============
