@@ -66,43 +66,79 @@ ATAC_bias <- read.table(paste0("/scratch/sh8tv/Project/scATAC/Result/diffmer_var
 DNase_bias <- read.table(paste0("/scratch/sh8tv/Project/scATAC/Result/diffmer_var_comparison/diffmerMat/flanking/IMR90naked_DNaseSE_enc",flankN,"flank.txt"),row.names=1,header=T)#[,"encbias"]
 
 
-ATAC_mat <- ATAC_raw[which(ATAC_raw[,1]=="chr1"),4:ncol(ATAC_raw)]#[1:100,]
-DNase_mat <- DNase_raw[which(ATAC_raw[,1]=="chr1"),4:ncol(ATAC_raw)]#[1:100,]
-seqtype_mat <- seqtype_raw[which(ATAC_raw[,1]=="chr1"),4:ncol(seqtype_raw)]#[1:100,]
+#ATAC_mat <- ATAC_raw[which(ATAC_raw[,1]=="chr1"),4:ncol(ATAC_raw)]#[1:100,]
+#DNase_mat <- DNase_raw[which(ATAC_raw[,1]=="chr1"),4:ncol(ATAC_raw)]#[1:100,]
+#seqtype_mat <- seqtype_raw[which(ATAC_raw[,1]=="chr1"),4:ncol(seqtype_raw)]#[1:100,]
+
+ATAC_mat <- ATAC_raw[,4:ncol(ATAC_raw)]#[1:100,]
+DNase_mat <- DNase_raw[,4:ncol(ATAC_raw)]
+seqtype_mat <- seqtype_raw[,4:ncol(seqtype_raw)]#[1:100,]
 
 ATAC_counts <- apply(ATAC_mat,1,sum)
 DNase_counts <- apply(DNase_mat,1,sum)
 
 
-A <- ATAC_mat
-D <- DNase_mat
-L <- seqtype_mat
+Amat <- ATAC_mat
+Dmat <- DNase_mat
+Lmat <- seqtype_mat
 
 summary_U <- cbind(ATAC_counts, DNase_counts)
 summary_V <- c(ATAC_bias[colnames(ATAC_mat),"encbias"])
 summary_W <- c(DNase_bias[colnames(ATAC_mat),"encbias"])
 
-log_this_v <- ATAC_bias[colnames(ATAC_mat),"encbias"]
-this_V <- exp((log_this_v - mean(log_this_v)))
+m <- nrow(Amat)
+n <- ncol(Amat)
 
-log_this_w <- DNase_bias[colnames(ATAC_mat),"encbias"]
-this_W <- exp((log_this_w - mean(log_this_w)))
-
-this_VW <- cbind(this_V,this_W)
+#log_this_v <- ATAC_bias[colnames(ATAC_mat),"encbias"]
+#this_V <- exp((log_this_v - mean(log_this_v)))
+#
+#log_this_w <- DNase_bias[colnames(ATAC_mat),"encbias"]
+#this_W <- exp((log_this_w - mean(log_this_w)))
+#
+#this_VW <- cbind(this_V,this_W)
 #this_V <- exp(ATAC_bias[,"encbias"])#DNase_counts
+
+Amat_sumi <- apply(Amat,2,sum)
+Amat_sumj <- apply(Amat,1,sum)
+Dmat_sumi <- apply(Dmat,2,sum)
+Dmat_sumj <- apply(Dmat,1,sum)
+
+cb_sumj = Amat_sumj + Dmat_sumj
+
+this_U <- (DNase_counts+ATAC_counts)/2
+
 for(iter_num in 1:maxit){
 
-    this_U <- VWtoU(this_VW,A,D,L)
-    this_VW <- UtoV(this_U,A,D,L)
-    summary_U <- cbind(summary_U, this_U)
-    summary_V <- cbind(summary_V, this_VW[,1])
-    summary_W <- cbind(summary_W, this_VW[,2])
+    ptm <- proc.time()
 
-    log_this_v <- log(this_VW[,1])
+    ### U to V,W
+    this_V <- c()
+    this_W <- c()
+    for(j in 1:n){
+        Vj = Amat_sumi[j] / sum(this_U * Lmat[,j])
+        this_V <- append(this_V,Vj)
+        Wj = Dmat_sumi[j] / sum(this_U * Lmat[,j])
+        this_W <- append(this_W,Wj)
+    }
+    ### V,W to U
+    this_U <- c()
+    for(i in 1:m){
+        Ui = cb_sumj[i] / sum((this_V + this_W) * Lmat[i,])
+        this_U <- append(this_U,Ui)
+    }
+
+    summary_U <- cbind(summary_U, this_U)
+    summary_V <- cbind(summary_V, this_V)
+    summary_W <- cbind(summary_W, this_W)
+
+    raw_this_V <- this_V
+    log_this_v <- log(raw_this_V)
     this_V <- exp((log_this_v - mean(log_this_v)))
-    log_this_w <- log(this_VW[,2])
+
+    raw_this_W <- this_W
+    log_this_w <- log(raw_this_W)
     this_W <- exp((log_this_w - mean(log_this_w)))
-    #this_V <- exp((log_this_v - mean(log_this_v))/sd(log_this_v))
+    print(proc.time() - ptm)
 
 }
 
@@ -113,9 +149,9 @@ colnames(summary_W) <- c("init",paste0("it",seq(maxit)))
 rownames(summary_U) <- rownames(ATAC_mat)
 colnames(summary_U) <- c("ATAC","DNase",paste0("it",seq(maxit)))
 
-write.table(summary_V,file=paste0(tissue,"_mergePeak_flank",flankN,"_combine_VWstart_Vmat.txt"),row.names=T,col.names=T,quote=F,sep="\t")
-write.table(summary_W,file=paste0(tissue,"_mergePeak_flank",flankN,"_combine_VWstart_Wmat.txt"),row.names=T,col.names=T,quote=F,sep="\t")
-write.table(summary_U,file=paste0(tissue,"_mergePeak_flank",flankN,"_combine_VWstart_Umat.txt"),row.names=T,col.names=T,quote=F,sep="\t")
+write.table(summary_V,file=paste0(tissue,"_mergePeak_flank",flankN,"_combine_Ustart_Vmat.txt"),row.names=T,col.names=T,quote=F,sep="\t")
+write.table(summary_W,file=paste0(tissue,"_mergePeak_flank",flankN,"_combine_Ustart_Wmat.txt"),row.names=T,col.names=T,quote=F,sep="\t")
+write.table(summary_U,file=paste0(tissue,"_mergePeak_flank",flankN,"_combine_Ustart_Umat.txt"),row.names=T,col.names=T,quote=F,sep="\t")
 
 
 
