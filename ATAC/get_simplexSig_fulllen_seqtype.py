@@ -248,21 +248,21 @@ def seq2biasParm(useseq,code):
     return seq_item 
 
 
-def get_regionLevel_simplex_parameters(inputbed,outputbed,plusbw,minusbw,biasmat,genome2bit):
-    simplex_code = encoding()
-    biasdict,flank = readBG(biasmat)
-    B,B0,B1,B2 = paramest(biasdict)
 
+
+def get_regionLevel_simplex_parameters(inputbed,outputbed,flank,genome2bit):
+    simplex_code = encoding()
+    #biasdict,flank = readBG(biasmat)
+    #B,B0,B1,B2 = paramest(biasdict)
+    flank = int(flank)
 #    outitem = seq2biasParm("ACTCGCAA",B,simplex_code)
     #print B
     genome = twobitreader.TwoBitFile(genome2bit)
 #    seq = genome[chrm][(int(ll[1])-flank):(int(ll[1])+flank)].upper()
 
-    plusBWH = BigWigFile(open(plusbw, 'rb'))
-    minusBWH = BigWigFile(open(minusbw, 'rb'))
-
     inf = open(inputbed)
     outf = open(outputbed,'w')
+    simplex_len = len(list(seq2biasParm("A"*(flank*2),simplex_code)))
     for line in inf:
         ll = line.split()
         chrm = ll[0]
@@ -271,34 +271,29 @@ def get_regionLevel_simplex_parameters(inputbed,outputbed,plusbw,minusbw,biasmat
         center = (int(ll[1]) + int(ll[2]))/2
         start = int(ll[1])#max(0,center-ext)
         end = int(ll[2])#center + ext
-        plusSig_raw = plusBWH.summarize(ll[0],start,end,end-start)#.sum_data
-        minusSig_raw = minusBWH.summarize(ll[0],start,end,end-start)#.sum_data
-        if type(plusSig_raw) == None or type(minusSig_raw) == None:
-            continue
-        plusSig = plusSig_raw.sum_data
-        minusSig = minusSig_raw.sum_data
+
         plusSequence = genome[chrm][(start-flank):(end+flank)].upper()
         minusSequence = genome[chrm][(start-flank+1):(end+flank+1)].upper()
-        plus_data = numpy.array([0.0]*len(B))
-        minus_data = numpy.array([0.0]*len(B))
-        for i in range(len(plusSig)):
-            #position = start + i
-            pcuts = plusSig[i]
-            if pcuts > 0:
-                pseq = plusSequence[i:(i+2*flank)].upper()
-                if not "N" in pseq:
-                    p_out = seq2biasParm(pseq,simplex_code)
-                    plus_data += p_out*pcuts
 
-        for i in range(len(minusSig)):
-            #position = start + i
-            mcuts = minusSig[i]
-            if mcuts > 0:
-                tmpseq = minusSequence[i:(i+2*flank)]
-                if not "N" in tmpseq:
-                    mseq = revcomp(tmpseq).upper()
-                    m_out = seq2biasParm(mseq,simplex_code)
-                    minus_data += m_out*mcuts
+        #plus_data = "NA"
+        #minus_data = "NA"
+        plus_data = numpy.array([0.0]*simplex_len)
+        minus_data = numpy.array([0.0]*simplex_len)
+        for i in range(len(plusSequence)-2*flank):
+            pseq = plusSequence[i:(i+2*flank)].upper()
+            if not "N" in pseq:
+                p_out = seq2biasParm(pseq,simplex_code)
+        #        if plus_data == "NA":
+        #            plus_data = numpy.array([0.0]*len(p_out))
+        #            minus_data = numpy.array([0.0]*len(p_out))
+                plus_data += p_out
+
+        for i in range(len(minusSequence)-2*flank):
+            tmpseq = minusSequence[i:(i+2*flank)]
+            if not "N" in tmpseq:
+                mseq = revcomp(tmpseq).upper()
+                m_out = seq2biasParm(mseq,simplex_code)
+                minus_data += m_out
 
         newll = ll + list(plus_data) + list(minus_data)
         outf.write("\t".join(map(str,newll))+"\n")
@@ -326,12 +321,8 @@ def main():
                          help="output bed file, simplex item for both +strand, - strand, appended in the tail of inputbed")              
     optparser.add_option("-s","--sequence",dest="sequence",type="str",default='/scratch/sh8tv/Data/Genome/hg38/hg38.2bit',
                          help="whole genome sequence in 2bit format")
-    optparser.add_option("-b","--biasmat",dest="biasmatrix",type="str",
-                         help="matrix of cutting bias, first 2 column is 8mer seq and raw bias (linear) ")
-    optparser.add_option("-p","--plusbw",dest="plusbw",type="str",default='/data/cut_plus.bw',
-                         help="cleavage bigwig for plus strand cuts")
-    optparser.add_option("-m","--minusbw",dest="minusbw",type="str",default='/data/cut_minus.bw',
-                         help="cleavage bigwig for minus strand cuts")
+    optparser.add_option("-f","--flank",dest="flank",type="int",default=4,
+                         help="flanking region for n-mer , default =4 means n=8")
                          
 #========minor options=============
 
@@ -339,14 +330,12 @@ def main():
 
     inputbed = options.inputbed
     outputbed = options.outputbed
-    biasmat = options.biasmatrix
-    plusbw = options.plusbw
-    minusbw = options.minusbw
+    flank = options.flank
 
     if not inputbed or not outputbed:
         optparser.print_help()
         sys.exit(1)
-    get_regionLevel_simplex_parameters(inputbed,outputbed,plusbw,minusbw,biasmat,options.sequence)
+    get_regionLevel_simplex_parameters(inputbed,outputbed,flank,options.sequence)
 
 if __name__== '__main__':
     try:
@@ -355,39 +344,5 @@ if __name__== '__main__':
     except KeyboardInterrupt:
         sys.stderr.write("User interrupt me ^_^ \n")
         sys.exit(0)
-
-
-
-
-
-
-
-#predY = b0f
-
-#biasmat = readBG('/scratch/sh8tv/Project/scATAC/Data/Summary_Data/bias_matrix/summary36bp/singleMat/NakedYeast_ATAC_Enc8mer.txt')
-
-#print sum(outitem)
-#print B
-#print B
-#useseq = "AACCCAAT"
-#bp1 = useseq[1]
-#simplex = code.d1[bp1]
-#print simplex
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

@@ -81,18 +81,18 @@ def make_nmer_dict(n):
     del allseq
     return nmer_seq
 
-def get_regionLevel_reads(inbed,outputname,plusbw,minusbw,species,flank):
+def get_regionLevel_sequence(inbed,outputname,species,flank,ext):
     genome = twobitreader.TwoBitFile("/scratch/sh8tv/Data/Genome/%s/%s.2bit"%(species,species))
     countdict_template = make_nmer_dict(2*flank)
-    #rddict_template = make_rd_dict(2*flank)
+#    rddict_template = make_rd_dict(2*flank)
 
-    plusBWH = BigWigFile(open(plusbw, 'rb'))
-    minusBWH = BigWigFile(open(minusbw, 'rb'))
+#    plusBWH = BigWigFile(open(plusbw, 'rb'))
+#    minusBWH = BigWigFile(open(minusbw, 'rb'))
 
-    random.seed(1228)
+#    random.seed(1228)
 
     inf = open(inbed)
-    outf = open(outputname + "_seqtype.bed",'w')
+    outf = open(outputname ,'w')
     #outfRD = open(outputname + "_rd.bed",'w')
     seqtypes = sorted(countdict_template.keys())
     newll_seq = []
@@ -100,7 +100,7 @@ def get_regionLevel_reads(inbed,outputname,plusbw,minusbw,species,flank):
     infileLen = len(inf.readline().split())
     for i in range(infileLen):
         newll_seq.append("C"+str(i))
-       # newll_rd.append("C"+str(i))
+    #    newll_rd.append("C"+str(i))
     newll_seq += sorted(countdict_template.keys())
     #newll_rd += sorted(rddict_template.keys())
 
@@ -109,54 +109,50 @@ def get_regionLevel_reads(inbed,outputname,plusbw,minusbw,species,flank):
 
     inf.seek(0)
     for line in inf:
-        Sdict = deepcopy(countdict_template)
-       # Rdict = deepcopy(rddict_template)
+        Sdict_p = deepcopy(countdict_template)
+        Sdict_m = deepcopy(countdict_template)
+
+        #Rdict = deepcopy(rddict_template)
         ll = line.split()
         chrm = ll[0]
-        #center = (int(ll[1]) + int(ll[2]))/2
-        start = int(ll[1])#max(0,center-ext)
-        end = int(ll[2])#center + ext
-        plusSig_obj = plusBWH.summarize(chrm,start,end,end-start)#.sum_data
-        minusSig_obj = minusBWH.summarize(chrm,start,end,end-start)#.sum_data
-        
-            #newll_seq = ll + [Sdict[x] for x in sorted(Sdict.keys())]
-            #outf.write("\t".join(map(str,newll_seq))+"\n")
-            
-        if plusSig_obj and minusSig_obj:
-            plusSig = plusSig_obj.sum_data
-            minusSig = minusSig_obj.sum_data
+        center = (int(ll[1]) + int(ll[2]))/2
+        start = max(0,center-ext)
+        end = center + ext
+        #plusSig = plusBWH.summarize(ll[0],start,end,end-start).sum_data
+        #minusSig = minusBWH.summarize(ll[0],start,end,end-start).sum_data
+        #if type(plusSig) == None or type(minusSig) == None:
+        #    continue
+        plusSequence = genome[chrm][(start-flank):(end+flank)].upper()
+        minusSequence = genome[chrm][(start-flank+1):(end+flank+1)].upper()
 
-            plusSequence = genome[chrm][(start-flank):(end+flank)].upper()
-            minusSequence = genome[chrm][(start-flank+1):(end+flank+1)].upper()
-
-            for i in range(len(plusSig)):
-                #position = start + i
-                pcuts = plusSig[i]
-                if pcuts > 0:
-                    pseq = plusSequence[i:(i+2*flank)].upper()
+        for i in range(len(plusSequence)-2*flank):
+            #position = start + i
+            #pcuts = plusSig[i]
+            #if pcuts > 0:
+            pseq = plusSequence[i:(i+2*flank)].upper()
                 #pseqRV = revcomp(plusSequence_reverse[i:(i+2*flank)]).upper()
-                    if not "N" in pseq :#and not 'N' in pseqRV:
+            if not "N" in pseq :#and not 'N' in pseqRV:
                 #    p_out = seq2biasParm(pseq,B,simplex_code)
                 #    plus_data += pcuts*p_out
-                        Sdict[pseq] += pcuts
-                 #   Rdict["rd"+str(random.randint(1,4**(2*flank)))] += 1#pcuts
+                Sdict_p[pseq] += 1#pcuts
+                   # Rdict["rd"+str(random.randint(1,4**(2*flank)))] += 1#pcuts
                     #plus_readscount += pcuts
                     #plus_biassum += biasdict[pseq]*pcuts
                     #plus_biasCB += (biasdict[pseq]+biasdict[pseqRV] ) *pcuts/2
 
                     #print i,pcuts,plus_readscount   
-            for i in range(len(minusSig)):
+        for i in range(len(minusSequence)-2*flank):
             #position = start + i
-                mcuts = minusSig[i]
-                if mcuts > 0:
+            #mcuts = minusSig[i]
+            #if mcuts > 0:
 #                tmpseq = minusSequence[i:(i+2*flank)]
-                    mseq = revcomp(minusSequence[i:(i+2*flank)]).upper()
+            mseq = revcomp(minusSequence[i:(i+2*flank)]).upper()
                 #mseqRV = minusSequence_reverse[i:(i+2*flank)].upper()
-                    if not "N" in mseq :#and not "N" in mseqRV:
+            if not "N" in mseq :#and not "N" in mseqRV:
                 #    m_out = seq2biasParm(mseq,B,simplex_code)
                 #    minus_data += mcuts*m_out
-                        Sdict[mseq] += mcuts
-                    #Rdict["rd"+str(random.randint(1,4**(2*flank)))] += 1#mcuts
+                Sdict_m[mseq] += 1#mcuts
+                 #   Rdict["rd"+str(random.randint(1,4**(2*flank)))] += 1#mcuts
                     #minus_readscount += mcuts
                     #minus_biassum += biasdict[mseq]*mcuts
                     #minus_biasCB += (biasdict[mseq]+biasdict[mseqRV] ) *mcuts/2
@@ -164,8 +160,7 @@ def get_regionLevel_reads(inbed,outputname,plusbw,minusbw,species,flank):
         #plus_biasave = plus_biassum / plus_readscount
         #minus_biasave = minus_biassum / minus_readscount
         #newll = ll + [plus_readscount,minus_readscount,plus_biassum,minus_biassum]#plus_biassum,minus_biassum,plus_biasCB,minus_biasCB] #+ list(plus_data) + list(minus_data)
-
-        newll_seq = ll + [Sdict[x] for x in sorted(Sdict.keys())]
+        newll_seq = ll + [Sdict_p[x] for x in sorted(Sdict_p.keys())] + [Sdict_m[x] for x in sorted(Sdict_m.keys())]
         #newll_rd = ll + [Rdict[x] for x in sorted(Rdict.keys())]
         outf.write("\t".join(map(str,newll_seq))+"\n")
         #outfRD.write("\t".join(map(str,newll_rd))+"\n")
@@ -193,26 +188,29 @@ def main():
                          help="output bed file, reads count for different cleavage sequence")              
     optparser.add_option("-s","--species",dest="species",type="str",default='hg38',
                          help="genome version, choose from hg38, mm10, sacCer3")
-    optparser.add_option("-p","--plusbw",dest="plusbw",type="str",
-                         help="1bp resolution cleavage bigwig for plus strand cuts")
-    optparser.add_option("-m","--minusbw",dest="minusbw",type="str",
-                         help="1bp resolution cleavage bigwig for minus strand cuts")
+#    optparser.add_option("-p","--plusbw",dest="plusbw",type="str",
+#                         help="1bp resolution cleavage bigwig for plus strand cuts")
+#    optparser.add_option("-m","--minusbw",dest="minusbw",type="str",
+#                         help="1bp resolution cleavage bigwig for minus strand cuts")
     optparser.add_option("-f","--flank",dest="flank",type="int",default=4,
                          help="flanking region for n-mer , default =4 means n=8")
-                         
+    optparser.add_option("-e","--ext",dest="ext",type="int",default=100,
+                         help="ext from center")
+
+
 #========minor options=============
 
     (options,args) = optparser.parse_args()
 
     inputbed = options.inputbed
     outputname = options.outputname
-    plusbw = options.plusbw
-    minusbw = options.minusbw
+    #plusbw = options.plusbw
+    #minusbw = options.minusbw
 
     if not inputbed or not outputname:
         optparser.print_help()
         sys.exit(1)
-    get_regionLevel_reads(inputbed,outputname,plusbw,minusbw,options.species,options.flank)
+    get_regionLevel_sequence(inputbed,outputname,options.species,options.flank,options.ext)
 
 if __name__== '__main__':
     try:

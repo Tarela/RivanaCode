@@ -36,11 +36,12 @@ def sample(inputfile,outputfile,percentage,number):
     if percentage == -1 :
         total = int(sp('wc -l %s'%(inputfile))[0].split()[0])
         percentage = number*1000.0/total
+        print percentage
     inf = open(inputfile)
     outf = open(outputfile,'w')
     for line in inf:
         a = random.randint(0,1000)
-        if a<= percentage*1000:
+        if a<= percentage:
             outf.write(line)
     inf.close()
     outf.close()
