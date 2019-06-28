@@ -52,7 +52,7 @@ def CGcontent(fullSEQ):
         
 ### function        
 
-def addavebias(inputbed, outputfilename, seq2bit, biasfile, plusCutbw, minusCutbw):
+def addavebias(inputbed, outputfilename, seq2bit, biasfile, plusCutbw, minusCutbw, biasmode):
     bias = {}
     inf = open(biasfile)
     for line in inf:
@@ -92,12 +92,18 @@ def addavebias(inputbed, outputfilename, seq2bit, biasfile, plusCutbw, minusCutb
                 print ll,position,"+",seqP,seqP_shift9N
                 bias_p = 0
             else:
-                bias_p = int(cut_p)*((bias[seqP]+bias[seqP_shift9N])/2)
+                if biasmode == "FR":
+                    bias_p = int(cut_p)*((bias[seqP]+bias[seqP_shift9N])/2)
+                else:
+                    bias_p = int(cut_p)*(bias[seqP])
             if not bias.has_key(seqN) or not bias.has_key(seqN_shift9P): 
                 print ll,position,"-",seqN,seqN_shift9P
                 bias_n = 0
             else:
-                bias_n = int(cut_n)*((bias[seqN]+bias[seqN_shift9P])/2)
+                if biasmode == "FR":
+                    bias_n = int(cut_n)*((bias[seqN]+bias[seqN_shift9P])/2)
+                else:
+                    bias_n = int(cut_n)*(bias[seqN])
             total_cuts += cut_p + cut_n
             total_bias += bias_p + bias_n
         if total_cuts == 0:
@@ -137,7 +143,8 @@ def main():
                          help="bigwig file of plus strand cuts")              
     optparser.add_option("-n","--minuscutbw",dest="minuscutbw",type="str",
                          help="bigwig file of minus strand cuts")              
- 
+    optparser.add_option("-m","--biasmode",dest="biasmode",type="str",default="F",
+                         help="bias mode, choose from F or FR, represent forward only or forwardXreverse")
 #    optparser.add_option("-d","--dupN",dest="dupN",type="int",default=1,
 #                         help="number of kept duplicate, default =1 ")
                          
@@ -149,11 +156,15 @@ def main():
     outputfile = options.outputfile
     pluscut = options.pluscutbw
     minuscut = options.minuscutbw
+    biasmode = options.biasmode
     if not inputbed or not outputfile or not pluscut or not minuscut:
         optparser.print_help()
         sys.exit(1)
-    
-    addavebias(inputbed, outputfile, options.sequence, options.biasfile, pluscut, minuscut)
+    if not biasmode in ["F","FR"]:
+        optparser.print_help()
+        sys.exit(1)
+
+    addavebias(inputbed, outputfile, options.sequence, options.biasfile, pluscut, minuscut, biasmode)
 
 if __name__== '__main__':
     try:
